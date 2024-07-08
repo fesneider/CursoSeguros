@@ -1,0 +1,61 @@
+#--------------------------------------#
+#               Imports                #
+#--------------------------------------#
+
+import pandas as pd
+import numpy as np
+
+#--------------------------------------#
+#             Importação               #
+#--------------------------------------#
+
+caminho = 'C:/Users/albuq/Downloads/quando_376.txt'
+df = pd.read_csv(caminho)
+
+#--------------------------------------#
+#             Alterando sinal          #
+#--------------------------------------#
+
+def mudar_sinal(valor, nome):
+    
+    if nome == "CMPID":
+    
+        df['ESRVALORMOV'] = np.where(df['CMPID'] == valor, -df['ESRVALORMOV'], df['ESRVALORMOV'])
+        
+    elif nome == "TPMOID":
+    
+        df['ESRVALORMOV'] = np.where(df['TPMOID'] == valor, -df['ESRVALORMOV'], df['ESRVALORMOV'])
+
+
+cmpids = ['3', '4', '5']
+tpmoid = ['1003', '1008']
+
+for cmpids in cmpids:
+    
+    mudar_sinal(cmpids, 'cmpid')
+
+for tpmoid in tpmoid:
+    
+    mudar_sinal(cmpids, 'cmpid')
+
+#--------------------------------------#
+#             Criando Fluxo            #
+#--------------------------------------#
+
+cmpids = list(dict.fromkeys(df['CMPID']))
+
+def movimentacao(valor):
+    
+    df = df[['CMPID', 'TPMOID', 'ESRVALORMOV']]
+    df = df[df['CMPID'] == valor]
+    
+    df = df.groupby(['CMPID', 'TPMOID']).sum(['ESRVALORMOV'])
+    
+    df = pd.DataFrame(df).reset_index()
+
+fluxo = {}    
+
+for cmpids in cmpids:
+    
+    fluxo[f"{cmpids}"] = movimentacao(f"{cmpids}")
+
