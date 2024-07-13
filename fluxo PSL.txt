@@ -1,0 +1,113 @@
+#--------------------------------------#
+#               Imports                #
+#--------------------------------------#
+
+import pandas as pd
+import numpy as np
+
+#--------------------------------------#
+#             Importação               #
+#--------------------------------------#
+
+caminho_377_atual = 'C:/Users/albuq/Downloads/quando_377.txt'
+caminho_377_anter = 'C:/Users/albuq/Downloads/quando_377.pkl'
+caminho_376_atual = 'C:/Users/albuq/Downloads/quando_377.txt'
+
+df_qe_376_atu = pd.read_csv(caminho_376_atual)
+df_qe_377_atu = pd.read_csv(caminho_377_atual)
+df_qe_377_ant = pd.read_pickle(caminho_377_anter)
+
+#--------------------------------------#
+#        Concatenando as bases         #
+#--------------------------------------#
+
+df_qe_377_ant = df_qe_377_ant[df_qe_377_ant['MRFMESANO'] == '2024-06-30']
+
+df_qe_377_ant = df_qe_377_ant[['CMPID', 'ESLVALORMOV']]
+df_qe_377_atu = df_qe_377_atu[['CMPID', 'ESLVALORMOV']]
+
+df_qe_376_atu = df_qe_376_atu[['TPMOID', 'CMPID', 'ESLVALORMOV']]
+
+#--------------------------------------#
+#             Alterando sinal          #
+#--------------------------------------#
+
+def mudar_sinal(valor, nome, num_qe, df):
+    
+    if nome == "CMPID" and num_qe = 376:
+    
+        x = np.where(df['CMPID'] == valor, -df['ESRVALORMOV'], df['ESRVALORMOV'])
+        
+    elif nome == "TPMOID" and num_qe = 376:
+    
+        x = np.where(df['TPMOID'] == valor, -df['ESRVALORMOV'], df['ESRVALORMOV'])
+        
+    elif nome == "TPMOID" and num_qe = 377:
+    
+        x = np.where(df['TPMOID'] == valor, -df['ESLVALORMOV'], df['ESLVALORMOV'])
+    
+    return x
+        
+df_qe_376_atu['valor_ajustado'] = mudar_sinal('1003', 'CMPID', 376, df_qe_376_atu)
+df_qe_376_atu['valor_ajustado'] = mudar_sinal('1008', 'CMPID', 376, df_qe_376_atu)
+
+df_qe_377_ant['valor_ajustado'] = df_qe_377_ant('1017', 'CMPID', 377, df_377_hist)
+df_qe_377_atu['valor_ajustado'] = df_qe_377_atu('1022', 'CMPID', 377, df_377_hist)
+
+df_qe_377_ant['valor_ajustado'] = df_qe_377_ant('1022', 'CMPID', 377, df_377_hist)
+df_qe_377_atu['valor_ajustado'] = df_qe_377_atu('1017', 'CMPID', 377, df_377_hist)
+
+#--------------------------------------#
+#             movimentação             #
+#--------------------------------------#
+
+cmpids = list(dict.fromkeys(df['CMPID']))
+
+def movimentacao(valor):
+    
+    df = df[['CMPID', 'TPMOID', 'ESRVALORMOV']]
+    df = df[df['CMPID'] == valor]
+    
+    df = df.groupby(['CMPID', 'TPMOID']).sum(['ESRVALORMOV'])
+    
+    df = pd.DataFrame(df).reset_index()
+
+fluxo = {}    
+
+aviso = movimentacao('0001')
+reabertura = movimentacao('0002')
+pag_parc = movimentacao('0003')
+pag_total = movimentacao('0004')
+cancelamento = movimentacao('0005')
+reavaliacao = movimentacao('0006')
+
+movimentacao = aviso + reabertura + pag_parc + pag_total + cancelamento + reavaliacao
+
+
+#--------------------------------------#
+#              pendentes               #
+#--------------------------------------#
+
+df_qe_377_ant = df_qe_377_ant[['ESRVALORMOV']]
+
+pendente_ant = df_qe_377_ant.sum('ESRVALORMOV')
+pendente_atu = df_qe_377_atu.sum('ESRVALORMOV')
+
+
+#--------------------------------------#
+#              pendentes               #
+#--------------------------------------#
+
+if movimentacao == (pendente_atu - pendente_ant):
+    
+    print("Os valores do QE 376 e QE 377 estão de acordo!!!")
+else:
+
+    print("Os valores do QE 376 e QE 377 estão com problemas!!!!")
+
+
+
+
+
+
+
