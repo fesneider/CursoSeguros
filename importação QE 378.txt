@@ -1,0 +1,47 @@
+#--------------------------------#
+#            Imports             #
+#--------------------------------#
+
+import pandas as pd
+
+#--------------------------------#
+#            Importa             #
+#--------------------------------#
+
+caminho_qe_378 = 'C:/Users/albuq/Downloads/Dados/est_378.txt'
+caminho_qe_con = 'C:/Users/albuq/Downloads/Dados/qe_378_hist.pkl'
+
+#### Importando o QE 378
+
+tab = [(0,7), (7, 12), (12, 20), (20, 23), (23, 27), (27, 31),
+       (31, 39), (39, 47), (47, 55), (55, 63), (63, 76),
+       (76, 81), (81, 101)]
+
+cols = ['ESLSEQ', 'ENTCODIGO', 'MRFMESANO', 'QUAID', 'TPMOID', 'CMPID', 'RAMCODIGO', 'ESPDATAINICIORO', 
+        'ESPDATAFIMRO', 'ESPDATAEMISSRO', 'ESPVALORMOVRO', 'ESPDATAINICIORD', 'ESPDATAFIMRD', 'ESPDATAEMISSRD',
+        'ESPVALORMOVRD', 'ESPCODCESS', 'ESPFREQ', 'ESPVALORCARO', 'ESPVALORCARD', 'ESPVALORCIRO', 
+        'ESPVALORCIRD', 'ESPMOEDA']
+
+
+qe_378 = pd.read_fwf(caminho_qe_378, colspecs = tab, head = cols)
+
+qe_con = pd.read_pickle(caminho_qe_con)
+
+data_filtro = qe_378['MRFMESANO'][0]
+
+qe_con = qe_con[qe_con['MRFMESANO'] = data_filtro]
+
+#--------------------------------#
+#   Exportando em formato XLSX   #
+#--------------------------------#
+
+qe_378.to_excel('C:/Users/albuq/Downloads/Dados/est_378.csv')
+
+#--------------------------------#
+#     Criando BD consolidado     #
+#--------------------------------#
+
+qe_378 = pd.concat([qe_378, qe_con], axis = 0)
+
+qe_378.to_pickle('C:/Users/albuq/Downloads/Dados/qe_378_hist.pkl')
+

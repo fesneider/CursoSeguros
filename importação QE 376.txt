@@ -1,0 +1,47 @@
+#--------------------------------#
+#            Imports             #
+#--------------------------------#
+
+import pandas as pd
+
+#--------------------------------#
+#            Importa             #
+#--------------------------------#
+
+caminho_qe_376 = 'C:/Users/albuq/Downloads/Dados/est_376.txt'
+caminho_qe_con = 'C:/Users/albuq/Downloads/Dados/qe_376_hist.pkl'
+
+#### Importando o QE 376
+
+tab = [(0,7), (7, 12), (12, 20), (20, 23), (23, 27), (27, 31),
+       (31, 35), (35, 43), (43, 51), (51, 59), (59, 67), (67, 80),
+       (80, 88), (88, 93), (93, 113), (113, 126)]
+
+cols = ['ESRSEQ', 'ENTCODIGO', 'MRFMESANO', 'QUAID', 'TPMOID', 'CMPID', 'RAMCODIGO', 
+'ESRDATAINICIO', 'ESRDATAFIM', 'ESRDATAOCORR', 'ESRDATAREG', 'ESRVALORMOV', 
+'ESRDATACOMUNICA', 'ESRCODCESS', 'ESRNUMSIN', 'ESRVALORMON']
+
+
+qe_376 = pd.read_fwf(caminho_qe_376, colspecs = tab, head = cols)
+qe_con = pd.read_pickle(caminho_qe_con)
+
+data_filtro = qe_376['MRFMESANO'][0]
+
+qe_con = qe_con[qe_con['MRFMESANO'] = data_filtro]
+
+#--------------------------------#
+#   Exportando em formato XLSX   #
+#--------------------------------#
+
+qe_376.to_excel('C:/Users/albuq/Downloads/Dados/est_376.csv')
+
+#--------------------------------#
+#     Criando BD consolidado     #
+#--------------------------------#
+
+qe_376 = pd.concat([qe_376, qe_con], axis = 0)
+
+qe_376.to_pickle('C:/Users/albuq/Downloads/Dados/qe_376_hist.pkl')
+
+
+
