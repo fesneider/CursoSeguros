@@ -1,0 +1,93 @@
+#--------------------------------#
+#            Imports             #
+#--------------------------------#
+
+import pandas as pd
+import numpy as np
+
+#--------------------------------#
+#            Importa             #
+#--------------------------------#
+
+caminho_qe_378 = 'C:/Users/albuq/Downloads/Dados/qe_378_hist.pkl'
+
+qe_378 = pd.read_pickle(caminho_qe_378)
+
+qe_378 = qe_378[['TPMOID', 'CMPID', 'RAMCODIGO', 'ESPDATAINICIORO', 
+        'ESPDATAFIMRO', 'ESPVALORMOVRO', 'ESPDATAINICIORD', 
+          'ESPDATAFIMRD', 'ESPDATAEMISSRD','ESPVALORMOVRD']]
+
+#--------------------------------#
+#         Ajustando Var.         #
+#--------------------------------#
+
+#### Criando mapa dos TPMOID
+
+tmpoid_map = {
+    '0007': 'emissao',
+    '0008': 'aumento',
+    '0009': 'restituicao',
+    '0010': 'cancelamento'
+}
+
+#### Criando mapa dos CMPIDs
+
+cmpid_map = {
+    '1026': 'direto',
+    '1027': 'coss_aceito',
+    '1028': 'coss_cedido',
+    '1029': 'premio_resseg',
+    '1030': 'restituicao_direto',
+    '1031': 'restituicao_aceito',
+    '1032': 'restituicao_cedido',
+    '1033': 'restituicao_resseguro',
+    '1034': 'cancelamento_direto',
+    '1035': 'cancelamento_aceito',
+    '1036': 'cancelamento_cedido',
+    '1037': 'cancelamento_resseguro'
+}
+
+def mudar(var):
+    if var == 'tpmoid':
+        qe_378['TPMOID'] = qe_378['TPMOID'].map(tmpoid_map)
+    elif var == 'cmpid':
+        qe_378['CMPID'] = qe_378['CMPID'].map(cmpid_map)
+    return qe_378
+
+# Exemplo de uso da função mudar
+qe_378 = mudar('tpmoid')
+qe_378 = mudar('cmpid')
+
+print(qe_378)
+
+#--------------------------------#
+#          Movimentação          #
+#--------------------------------#
+
+qe_378 = qe_378[qe_378['ESPDATAEMISSRD'] < qe_378['ESPDATAINICIORO']]
+
+qe_378['emissao'] = np.where(qe_378['TPMOID'] == 'emissao', qe_378['ESPVALORMOVRO'] * (qe_378['ESPDATAFIMRO'] - qe_378['ESPDATAINICIORO'] + 1) / (qe_378['ESPDATAFIMRO'] - qe_378['MRFMESANO'] + 1),0)
+
+def calculo_aumento(qe_378):
+    if qe_378['ESPDATAEMISSRD'] < qe_378['ESPDATAINICIORO'] and qe_378['TPMOID'] == 'aumento':
+        return qe_378['ESPVALORMOVRD']
+    elif (qe_378['ESPDATAFIMRD'] == qe_378['ESPDATAFIMRO'] and qe_378['TPMOID'] == 'aumento'or 
+          qe_378['ESPDATAINICIORD'] >= qe_378['ESPDATAFIMRO'] and qe_378['TPMOID'] == 'aumento'or 
+          (qe_378['ESPDATAFIMRD'] < qe_378['ESPDATAFIMRO'] and qe_378['ESPDATAINICIORD'] >= qe_378['ESPDATAINICIORO'])):
+        return qe_378['ESPVALORMOVRD'] * (qe_378['ESPDATAFIMRD'] - qe_378['ESPDATAINICIORD'] + 1) / (qe_378['ESPDATAFIMRD'] - qe_378['MRFMESANO'] + 1)
+    elif (qe_378['ESPDATAFIMRD'] > qe_378['ESPDATAFIMRO'] and qe_378['ESPDATAINICIORD'] < qe_378['ESPDATAFIMRO']and qe_378['TPMOID'] == 'aumento'):
+        return ((qe_378['ESPVALORMOVRD'] * (qe_378['ESPDATAFIMRD'] - qe_378['ESPDATAINICIORD'] + 1) / (qe_378['ESPDATAFIMRD'] - qe_378['MRFMESANO'] + 1)) + 
+                (qe_378['ESPVALORMOVRO'] * (qe_378['ESPDATAFIMRD'] - qe_378['ESPDATAINICIORO'] + 1) / (qe_378['ESPDATAFIMRD'] - qe_378['MRFMESANO'] + 1)) - 
+                (qe_378['ESPVALORMOVRO'] * (qe_378['ESPDATAFIMRO'] - qe_378['ESPDATAINICIORO'] + 1) / (qe_378['ESPDATAFIMRO'] - qe_378['MRFMESANO'] + 1)))
+
+qe_378['aumento'] = qe_378.apply(calculo_aumento, axis=1)  
+qe_378['restituicao'] = np.where(qe_378['TPMOID'] == 'restituicao', qe_378['ESPVALORMOVRD'] * (qe_378['ESPDATAFIMRO'] - qe_378['ESPDATAINICIORD'] + 1) / (qe_378['ESPDATAFIMRO'] - qe_378['MRFMESANO'] + 1),0)
+qe_378['cancelamento'] = np.where(qe_378['TPMOID'] == 'cancelamento', qe_378['ESPVALORMOVRO'] * (qe_378['ESPDATAFIMRO'] - qe_378['ESPDATAINICIORO'] + 1) / (qe_378['ESPDATAFIMRO'] - qe_378['MRFMESANO'] + 1),0)
+
+#--------------------------------#
+#          Movimentação          #
+#--------------------------------#
+
+qe_378 = qe_378[['RAMCODIGO', 'emissao', 'aumento', 'restituicao', 'cancelamento']]
+
+qe_378 = qe_378.groupby(['RAMCODIGO']).sum()
